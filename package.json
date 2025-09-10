@@ -1,0 +1,14 @@
+{
+  "name": "mi-bot-telegram",
+  "version": "1.0.0",
+  "description": "Mi primer bot de Telegram",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "^0.64.0",
+    "nodemailer": "^6.9.7",
+    "dotenv": "^16.3.0"
+  }
+}
