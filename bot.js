@@ -2,7 +2,7 @@ require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
 const axios = require('axios');
 
-console.log('🚀 Iniciando Bot con BIN Checker GRATIS...');
+console.log('🚀 Iniciando GokuSYS...');
 
 if (!process.env.TELEGRAM_TOKEN) {
     console.error('ERROR: No hay token de Telegram');
@@ -56,7 +56,7 @@ async function checkBIN(binNumber) {
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
     
-    const message = `🤖 Bot BIN Checker GRATIS
+    const message = `🤖 Bot GokuSYS
 
 📋 Comandos disponibles:
 /bin [6 dígitos] - Verificar información de tarjeta
@@ -65,7 +65,7 @@ bot.onText(/\/start/, (msg) => {
 
 💡 Ejemplo: /bin 424242
 
-🎯 Usando Binlist.net (50,000 consultas/mes GRATIS)`;
+🎯 20T`;
     
     bot.sendMessage(chatId, message);
 });
@@ -103,7 +103,7 @@ bot.onText(/\/bin (\d+)/, async (msg, match) => {
             }
             
             mensaje += `\n⏰ Consulta realizada: ${new Date().toLocaleString()}\n`;
-            mensaje += `🎯 Fuente: Binlist.net (Gratis)`;
+            mensaje += `🎯 20T`;
 
             await bot.editMessageText(mensaje, {
                 chat_id: chatId,
@@ -147,7 +147,6 @@ Ejemplos para probar:
 • /bin 601111 (Discover)
 • /bin 353011 (JCB)
 
-Límites: 50,000 consultas/mes GRATIS
 
 🔒 No almacenamos datos de tarjetas.`;
     
@@ -162,7 +161,6 @@ bot.onText(/\/status/, (msg) => {
 
 ✅ Bot: Funcionando correctamente
 ⏰ Hora: ${new Date().toLocaleString()}
-🎯 API: Binlist.net (Gratis)
 📈 Límite: 50,000 consultas/mes
 
 💡 Usa: /bin 424242 para probar`;
@@ -184,4 +182,4 @@ bot.on('polling_error', (error) => {
     console.log('Error de polling:', error.code);
 });
 
-console.log('✅ Bot BIN Checker GRATIS iniciado correctamente');
+console.log('✅ Bot GokuSYS');
