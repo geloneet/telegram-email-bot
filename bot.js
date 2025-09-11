@@ -269,4 +269,4 @@ bot.on('polling_error', (error) => {
     console.log('Error de polling:', error.code);
 });
 
-console.log('✅ Bot BIN Checker PRO iniciado correctamente');
+console.log('✅ Bot GOKUSYS iniciado correctamente');
