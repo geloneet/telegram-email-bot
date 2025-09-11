@@ -51,12 +51,11 @@ async function checkBIN(binNumber) {
     }
 }
 
-// Comando /start
+// Comando /start (MARKDOWN CORREGIDO)
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
     
-    const message = `
-🤖 *Bot BIN Checker Pro*
+    const message = `🤖 *Bot BIN Checker Pro*
 
 📋 *Comandos disponibles:*
 /bin [6 dígitos] - Verificar información de tarjeta
@@ -65,13 +64,12 @@ bot.onText(/\/start/, (msg) => {
 
 💡 *Ejemplo:* /bin 424242
 
-🔒 *100% seguro y confidencial*
-    `;
+🔒 *100% seguro y confidencial*`;
     
     bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
 });
 
-// Comando /bin [número]
+// Comando /bin [número] (MARKDOWN CORREGIDO)
 bot.onText(/\/bin (\d+)/, async (msg, match) => {
     const chatId = msg.chat.id;
     const binNumber = match[1].trim();
@@ -89,10 +87,11 @@ bot.onText(/\/bin (\d+)/, async (msg, match) => {
         if (resultado.success) {
             const binData = resultado.data;
             
+            // MENSAJE CORREGIDO - Sin markdown problemático
             let mensaje = `✅ *Información de la Tarjeta*\n\n`;
             mensaje += `🔢 *BIN:* ${binNumber}\n`;
             mensaje += `🏦 *Banco:* ${binData.bank?.name || 'No disponible'}\n`;
-            mensaje += `📍 *País:* ${binData.country?.name || 'No disponible'} (${binData.country?.emoji || ''})\n`;
+            mensaje += `📍 *País:* ${binData.country?.name || 'No disponible'} ${binData.country?.emoji || ''}\n`;
             mensaje += `💳 *Tipo:* ${binData.type || 'No disponible'}\n`;
             mensaje += `🔤 *Marca:* ${binData.scheme || 'No disponible'}\n`;
             mensaje += `💰 *Moneda:* ${binData.currency || 'No disponible'}\n`;
@@ -106,8 +105,8 @@ bot.onText(/\/bin (\d+)/, async (msg, match) => {
             }
             
             mensaje += `\n📊 *Datos adicionales:*\n`;
-            mensaje += `• Prepaid: ${binData.prepaid ? '✅ Sí' : '❌ No'}\n`;
-            mensaje += `• Luhn Check: ${binData.luhn ? '✅ Válido' : '❌ Inválido'}\n`;
+            mensaje += `• Prepaid: ${binData.prepaid ? 'Sí' : 'No'}\n`;
+            mensaje += `• Luhn Check: ${binData.luhn ? 'Válido' : 'Inválido'}\n`;
             
             mensaje += `\n⏰ *Consulta realizada:* ${new Date().toLocaleString()}`;
 
@@ -118,8 +117,9 @@ bot.onText(/\/bin (\d+)/, async (msg, match) => {
             });
 
         } else {
+            // MENSAJE DE ERROR CORREGIDO
             await bot.editMessageText(
-                `❌ *Error en la consulta:*\n\n${resultado.error}\n\n💡 Asegúrate de que:\n• El BIN tenga 6 dígitos\n• La API Key esté configurada\n• Tengas requests disponibles`,
+                `❌ *Error en la consulta*\n\n${resultado.error}\n\n💡 Asegúrate de que:\n• El BIN tenga 6 dígitos\n• La API Key esté configurada\n• Tengas requests disponibles`,
                 {
                     chat_id: chatId,
                     message_id: progressMsg.message_id,
@@ -129,8 +129,9 @@ bot.onText(/\/bin (\d+)/, async (msg, match) => {
         }
 
     } catch (error) {
+        // MENSAJE DE ERROR CORREGIDO
         await bot.editMessageText(
-            `❌ *Error inesperado:*\n\n${error.message}\n\n🔧 Contacta al administrador.`,
+            `❌ *Error inesperado*\n\n${error.message}\n\n🔧 Contacta al administrador.`,
             {
                 chat_id: chatId,
                 message_id: progressMsg.message_id,
@@ -140,12 +141,11 @@ bot.onText(/\/bin (\d+)/, async (msg, match) => {
     }
 });
 
-// Comando /help
+// Comando /help (MARKDOWN CORREGIDO)
 bot.onText(/\/help/, (msg) => {
     const chatId = msg.chat.id;
     
-    const message = `
-❓ *Ayuda - BIN Checker*
+    const message = `❓ *Ayuda - BIN Checker*
 
 *¿Qué es un BIN?*
 El BIN (Bank Identification Number) son los primeros 6 dígitos de una tarjeta que identifican al banco emisor.
@@ -160,41 +160,37 @@ El BIN (Bank Identification Number) son los primeros 6 dígitos de una tarjeta q
 • /bin 555555 (Mastercard prueba)  
 • /bin 378282 (American Express)
 
-*⚠️ Importante:*
+*Importante:*
 • Solo uso educativo
 • No almacenamos datos
 • Consulta en tiempo real
 
-*🔐 Seguridad:*
-No compartas información sensible de tarjetas.
-    `;
+*Seguridad:*
+No compartas información sensible de tarjetas.`;
     
     bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
 });
 
-// Comando /status
+// Comando /status (MARKDOWN CORREGIDO)
 bot.onText(/\/status/, (msg) => {
     const chatId = msg.chat.id;
     
-    const statusMessage = `
-📊 *Estado del Bot:*
+    const statusMessage = `📊 *Estado del Bot:*
 
 🟢 Bot: Funcionando correctamente
 ⏰ Hora: ${new Date().toLocaleString()}
-🔑 API Key: ${process.env.APILAYER_KEY ? '✅ Configurada' : '❌ No configurada'}
+🔑 API Key: ${process.env.APILAYER_KEY ? 'Configurada' : 'No configurada'}
 
-💡 Usa: /bin 424242 para probar
-    `;
+💡 Usa: /bin 424242 para probar`;
     
     bot.sendMessage(chatId, statusMessage, { parse_mode: 'Markdown' });
 });
 
-// Manejar mensajes no reconocidos
+// Manejar mensajes no reconocidos (SIN MARKDOWN)
 bot.on('message', (msg) => {
     if (!msg.text.startsWith('/')) {
         bot.sendMessage(msg.chat.id, 
-            '🤖 Usa /help para ver los comandos disponibles\n💡 Ejemplo: /bin 424242',
-            { parse_mode: 'Markdown' }
+            '🤖 Usa /help para ver los comandos disponibles. Ejemplo: /bin 424242'
         );
     }
 });
