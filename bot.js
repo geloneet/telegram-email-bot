@@ -15,10 +15,10 @@ if (!process.env.SMTP_USERNAME || !process.env.SMTP_PASSWORD) {
     console.log('⚠️  Advertencia: No hay configuración de email');
 }
 
-// Configurar email (si existe)
+// Configurar email (si existe) - ¡CORREGIDO!
 let transporter = null;
 if (process.env.SMTP_USERNAME && process.env.SMTP_PASSWORD) {
-    transporter = nodemailer.createTransporter({
+    transporter = nodemailer.createTransport({  // ¡CORRECTO: createTransport!
         service: 'gmail',
         auth: {
             user: process.env.SMTP_USERNAME,
