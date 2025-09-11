@@ -2,143 +2,135 @@ require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
 const axios = require('axios');
 
-console.log('🚀 Iniciando bot de suscripciones...');
+console.log('🚀 Iniciando Bot con BIN Checker...');
 
+// Verificar configuración
 if (!process.env.TELEGRAM_TOKEN) {
     console.error('❌ ERROR: No hay token de Telegram');
     process.exit(1);
+}
+
+if (!process.env.APILAYER_KEY) {
+    console.log('⚠️  Advertencia: No hay API Key de APILayer');
 }
 
 const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { 
     polling: true 
 });
 
-// Función REAL para suscribirse a The Guardian
-async function subscribeToGuardian(email) {
+// Función para verificar BIN
+async function checkBIN(binNumber) {
     try {
-        console.log('📧 Suscribiendo a The Guardian:', email);
+        console.log('🔍 Verificando BIN:', binNumber);
         
-        // Este es el endpoint REAL que usa The Guardian en su frontend
-        const response = await axios.post('https://www.theguardian.com/email/form/plaintone/protect-redirect', {
-            email: email,
-            listName: 'guardian-today-uk', // Newsletter principal
-            'email-type': 'article',
-            source: 'other',
-            optIn: true, // Consentimiento explícito
-            setPreferences: true
-        }, {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                'Origin': 'https://www.theguardian.com',
-                'Referer': 'https://www.theguardian.com/email'
-            },
-            timeout: 15000
-        });
-
-        console.log('✅ Respuesta del servidor:', response.status);
-        
-        if (response.status === 200 || response.status === 201) {
-            return {
-                success: true,
-                message: '¡Suscripción exitosa! Revisa tu email para confirmar.',
-                email: email,
-                newsletter: 'The Guardian Today UK'
-            };
-        } else {
-            return {
-                success: false,
-                error: 'Error en el servidor. Intenta manualmente.',
-                manualUrl: 'https://www.theguardian.com/email'
-            };
+        if (!process.env.APILAYER_KEY) {
+            throw new Error('API Key no configurada. Revisa APILAYER_KEY en variables.');
         }
 
+        // Validar que el BIN tenga 6 dígitos
+        if (!/^\d{6}$/.test(binNumber)) {
+            throw new Error('El BIN debe tener exactamente 6 dígitos');
+        }
+
+        const response = await axios.get(`https://api.apilayer.com/bincheck/${binNumber}`, {
+            headers: {
+                'apikey': process.env.APILAYER_KEY
+            },
+            timeout: 10000
+        });
+
+        console.log('✅ Respuesta de BIN API:', response.status);
+        return { success: true, data: response.data };
+
     } catch (error) {
-        console.log('❌ Error detallado:', error.response?.data || error.message);
-        
-        // Si falla la API, ofrecemos método alternativo
-        return {
-            success: false,
-            error: error.response?.data?.message || 'Error de conexión',
-            manualUrl: 'https://www.theguardian.com/email',
-            alternativeMethod: true
+        console.log('❌ Error en BIN check:', error.response?.data || error.message);
+        return { 
+            success: false, 
+            error: error.response?.data?.message || error.message 
         };
     }
 }
 
-// Comando /guardian [email] - SUSCRIPCIÓN REAL
-bot.onText(/\/guardian (.+)/, async (msg, match) => {
+// Comando /start
+bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
-    const email = match[1].trim();
     
-    // Validación robusta de email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        return bot.sendMessage(chatId, '❌ Email no válido. Ejemplo: /guardian tuemail@gmail.com');
-    }
+    const message = `
+🤖 *Bot BIN Checker Pro*
+
+📋 *Comandos disponibles:*
+/bin [6 dígitos] - Verificar información de tarjeta
+/help - Ayuda e información
+/status - Estado del bot
+
+💡 *Ejemplo:* /bin 424242
+
+🔒 *100% seguro y confidencial*
+    `;
+    
+    bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
+});
+
+// Comando /bin [número]
+bot.onText(/\/bin (\d+)/, async (msg, match) => {
+    const chatId = msg.chat.id;
+    const binNumber = match[1].trim();
+    
+    console.log('📨 Comando /bin recibido:', binNumber);
 
     const progressMsg = await bot.sendMessage(chatId, 
-        `📧 Suscribiendo ${email} a The Guardian...\n\n⏳ Esto puede tomar unos segundos...`,
+        `🔍 Verificando BIN: ${binNumber}\n\n⏳ Consultando base de datos...`,
         { parse_mode: 'Markdown' }
     );
 
     try {
-        const resultado = await subscribeToGuardian(email);
+        const resultado = await checkBIN(binNumber);
 
         if (resultado.success) {
+            const binData = resultado.data;
+            
+            let mensaje = `✅ *Información de la Tarjeta*\n\n`;
+            mensaje += `🔢 *BIN:* ${binNumber}\n`;
+            mensaje += `🏦 *Banco:* ${binData.bank?.name || 'No disponible'}\n`;
+            mensaje += `📍 *País:* ${binData.country?.name || 'No disponible'} (${binData.country?.emoji || ''})\n`;
+            mensaje += `💳 *Tipo:* ${binData.type || 'No disponible'}\n`;
+            mensaje += `🔤 *Marca:* ${binData.scheme || 'No disponible'}\n`;
+            mensaje += `💰 *Moneda:* ${binData.currency || 'No disponible'}\n`;
+            
+            if (binData.bank?.url) {
+                mensaje += `🌐 *Sitio web:* ${binData.bank.url}\n`;
+            }
+            
+            if (binData.bank?.phone) {
+                mensaje += `📞 *Teléfono:* ${binData.bank.phone}\n`;
+            }
+            
+            mensaje += `\n📊 *Datos adicionales:*\n`;
+            mensaje += `• Prepaid: ${binData.prepaid ? '✅ Sí' : '❌ No'}\n`;
+            mensaje += `• Luhn Check: ${binData.luhn ? '✅ Válido' : '❌ Inválido'}\n`;
+            
+            mensaje += `\n⏰ *Consulta realizada:* ${new Date().toLocaleString()}`;
+
+            await bot.editMessageText(mensaje, {
+                chat_id: chatId,
+                message_id: progressMsg.message_id,
+                parse_mode: 'Markdown'
+            });
+
+        } else {
             await bot.editMessageText(
-                `🎉 *¡SUSCRIPCIÓN EXITOSA!*\n\n` +
-                `📧 *Email:* ${resultado.email}\n` +
-                `📰 *Newsletter:* ${resultado.newsletter}\n` +
-                `✅ *Estado:* ${resultado.message}\n\n` +
-                `📬 Revisa tu bandeja de entrada y spam para confirmar la suscripción.`,
+                `❌ *Error en la consulta:*\n\n${resultado.error}\n\n💡 Asegúrate de que:\n• El BIN tenga 6 dígitos\n• La API Key esté configurada\n• Tengas requests disponibles`,
                 {
                     chat_id: chatId,
                     message_id: progressMsg.message_id,
                     parse_mode: 'Markdown'
                 }
             );
-        } else {
-            // Método alternativo si falla la API
-            if (resultado.alternativeMethod) {
-                await bot.editMessageText(
-                    `⚠️ *Usando método alternativo...*\n\n` +
-                    `📧 Email: ${email}\n` +
-                    `📰 The Guardian\n\n` +
-                    `🔗 *Completa la suscripción:* [Haz click aquí](https://www.theguardian.com/email)\n\n` +
-                    `💡 Abre el link e ingresa tu email manualmente.`,
-                    {
-                        chat_id: chatId,
-                        message_id: progressMsg.message_id,
-                        parse_mode: 'Markdown',
-                        disable_web_page_preview: true,
-                        reply_markup: {
-                            inline_keyboard: [[
-                                { 
-                                    text: "📝 Completar suscripción", 
-                                    url: `https://www.theguardian.com/email?email=${encodeURIComponent(email)}` 
-                                }
-                            ]]
-                        }
-                    }
-                );
-            } else {
-                await bot.editMessageText(
-                    `❌ *Error:* ${resultado.error}\n\n` +
-                    `🔗 Intenta manualmente: https://www.theguardian.com/email`,
-                    {
-                        chat_id: chatId,
-                        message_id: progressMsg.message_id,
-                        parse_mode: 'Markdown'
-                    }
-                );
-            }
         }
 
     } catch (error) {
         await bot.editMessageText(
-            `❌ *Error inesperado:*\n\n${error.message}\n\n` +
-            `🔗 Suscripción manual: https://www.theguardian.com/email`,
+            `❌ *Error inesperado:*\n\n${error.message}\n\n🔧 Contacta al administrador.`,
             {
                 chat_id: chatId,
                 message_id: progressMsg.message_id,
@@ -148,53 +140,33 @@ bot.onText(/\/guardian (.+)/, async (msg, match) => {
     }
 });
 
-// Comando /start mejorado
-bot.onText(/\/start/, (msg) => {
-    const chatId = msg.chat.id;
-    
-    const message = `
-🤖 *Bot de Suscripción a The Guardian*
-
-📋 *Comando principal:*
-/guardian [email] - Suscribirse automáticamente
-
-📰 *Newsletter incluido:*
-• The Guardian Today UK
-• Noticias internacionales
-• Edición matutina
-
-✅ *100% ético y legal*
-✅ *Endpoint oficial de The Guardian*
-✅ *Consentimiento explícito*
-
-⚡ *Ejemplo:* /guardian tuemail@gmail.com
-    `;
-    
-    bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
-});
-
 // Comando /help
 bot.onText(/\/help/, (msg) => {
     const chatId = msg.chat.id;
     
     const message = `
-❓ *Ayuda y información:*
+❓ *Ayuda - BIN Checker*
 
-*¿Cómo funciona?*
-1. Usa /guardian tuemail@gmail.com
-2. El bot usa el endpoint oficial de The Guardian
-3. Recibirás un email de confirmación
-4. Haz click en el link de confirmación
+*¿Qué es un BIN?*
+El BIN (Bank Identification Number) son los primeros 6 dígitos de una tarjeta que identifican al banco emisor.
 
-*¿Es legal y ético?*
-✅ Sí, usamos el formulario oficial
-✅ Sí, requerimos consentimiento explícito
-✅ Sí, cumplimos con GDPR y leyes de protección de datos
+*¿Cómo usar?*
+1. Encuentra los primeros 6 dígitos de una tarjeta
+2. Usa: /bin 123456
+3. Obtén información del banco
 
-*Problemas comunes:*
-• Revisa tu carpeta de spam
-• Asegúrate de que el email sea válido
-• Si falla, te daremos un link directo
+*Ejemplos de BINs para probar:*
+• /bin 424242 (Visa prueba)
+• /bin 555555 (Mastercard prueba)  
+• /bin 378282 (American Express)
+
+*⚠️ Importante:*
+• Solo uso educativo
+• No almacenamos datos
+• Consulta en tiempo real
+
+*🔐 Seguridad:*
+No compartas información sensible de tarjetas.
     `;
     
     bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
@@ -203,7 +175,28 @@ bot.onText(/\/help/, (msg) => {
 // Comando /status
 bot.onText(/\/status/, (msg) => {
     const chatId = msg.chat.id;
-    bot.sendMessage(chatId, `✅ Bot funcionando - ${new Date().toLocaleString()}`);
+    
+    const statusMessage = `
+📊 *Estado del Bot:*
+
+🟢 Bot: Funcionando correctamente
+⏰ Hora: ${new Date().toLocaleString()}
+🔑 API Key: ${process.env.APILAYER_KEY ? '✅ Configurada' : '❌ No configurada'}
+
+💡 Usa: /bin 424242 para probar
+    `;
+    
+    bot.sendMessage(chatId, statusMessage, { parse_mode: 'Markdown' });
+});
+
+// Manejar mensajes no reconocidos
+bot.on('message', (msg) => {
+    if (!msg.text.startsWith('/')) {
+        bot.sendMessage(msg.chat.id, 
+            '🤖 Usa /help para ver los comandos disponibles\n💡 Ejemplo: /bin 424242',
+            { parse_mode: 'Markdown' }
+        );
+    }
 });
 
 // Manejo de errores
@@ -211,5 +204,4 @@ bot.on('polling_error', (error) => {
     console.log('❌ Error de polling:', error.code);
 });
 
-console.log('✅ Bot de The Guardian iniciado correctamente');
-console.log('📍 Endpoint: https://www.theguardian.com/email/form/plaintone/protect-redirect');
+console.log('✅ Bot BIN Checker iniciado correctamente');
