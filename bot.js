@@ -77,14 +77,17 @@ async function checkBIN(binNumber) {
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
     
-    const message = `🤖 *GOKUSYS* 🚀
+    const message = `🤖 *Bot BIN Checker PRO* 🚀
 
 📋 *Comandos disponibles:*
 /bin [6 dígitos] - Verificar tarjeta con categoría
 /help - Ayuda e información  
 /status - Estado del bot
 
-💡 *Ejemplo:* /bin 424242`;
+💡 *Ejemplo:* /bin 424242
+
+🎯 *Ahora con:* ✅ Categoría ✅ Tipo ✅ Nivel ✅ País
+🔒 *Totalmente GRATIS* - Sin API Key`;
     
     bot.sendMessage(chatId, message);
 });
@@ -138,7 +141,7 @@ bot.onText(/\/bin (\d+)/, async (msg, match) => {
             }
             
             mensaje += `\n⏰ *Consulta realizada:* ${new Date().toLocaleString()}\n`;
-            mensaje += `🎯 @${userInfo.username}\n`;
+            mensaje += `🎯 *Fuente:* ${source}\n`;
             mensaje += `📈 *Límite:* Consultas ilimitadas`;
 
             await bot.editMessageText(mensaje, {
@@ -171,7 +174,7 @@ bot.onText(/\/bin (\d+)/, async (msg, match) => {
 bot.onText(/\/help/, (msg) => {
     const chatId = msg.chat.id;
     
-    const message = `❓ *AYUDA - GOKUSYS* 🚀
+    const message = `❓ *AYUDA - BIN CHECKER PRO* 🚀
 
 *¿Qué información muestra?*
 ✅ Categoría de la tarjeta
@@ -208,7 +211,7 @@ bot.onText(/\/status/, (msg) => {
 
 ✅ *Bot:* Funcionando al 100%
 ⏰ *Hora:* ${new Date().toLocaleString()}
-🎯 @${userInfo.username}
+🎯 *API:* Binlist.com.br + Binlist.net
 📈 *Límite:* 1000+ consultas/día
 💡 *Ejemplo:* /bin 424242
 
@@ -266,4 +269,4 @@ bot.on('polling_error', (error) => {
     console.log('Error de polling:', error.code);
 });
 
-console.log('✅ Bot GokuSYS iniciado correctamente');
+console.log('✅ Bot BIN Checker PRO iniciado correctamente');
