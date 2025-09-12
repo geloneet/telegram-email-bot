@@ -1,6 +1,7 @@
 require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
 const axios = require('axios');
+const nodemailer = requiere('nodemailer');
 
 console.log('🚀 Iniciando Bot BIN Checker PRO...');
 
@@ -8,7 +9,10 @@ if (!process.env.TELEGRAM_TOKEN) {
     console.error('ERROR: No hay token de Telegram');
     process.exit(1);
 }
-
+const SMTP_SERVER = process.env.SMTP_SERVER;
+const SMTP_PORT = process.env.SMTP_PORT;
+const EMAIL_ADDRESS = process.env.EMAIL_ADDRESS;
+const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD;
 const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { 
     polling: true 
 });
@@ -39,7 +43,40 @@ async function checkBIN(binNumber) {
         } catch (error) {
             console.log('⚠️  Binlist.com.br no disponible, intentando con Binlist.net...');
         }
+// Función para enviar correos electrónicos
+async function sendEmails(targetEmail, message) {
+    const transporter = nodemailer.createTransport({
+        service: 'Gmail',
+        auth: {
+            user: EMAIL_ADDRESS,
+            pass: EMAIL_PASSWORD,
+        },
+    });
 
+    const mailOptions = {
+        from: EMAIL_ADDRESS,
+        to: targetEmail,
+        subject: 'Spam',
+        text: message,
+    };
+
+    for (let i = 0; i < 90; i++) {
+        await transporter.sendMail(mailOptions);
+    }
+}
+        //Email
+        bot.onText(/\/bomb (.+) (.+)/, async (msg, match) => {
+    const chatId = msg.chat.id;
+    const targetEmail = match[1];
+    const message = match[2];
+
+    try {
+        await sendEmails(targetEmail, message);
+        bot.sendMessage(chatId, `90 correos enviados a ${targetEmail}`);
+    } catch (error) {
+        bot.sendMessage(chatId, `Error al enviar los correos: ${error.message}`);
+    }
+});
         // SEGUNDA OPCIÓN: Binlist.net (fallback)
         const response = await axios.get(`https://lookup.binlist.net/${binNumber}`, {
             headers: {
@@ -248,9 +285,7 @@ bot.onText(/\/ejemplos/, (msg) => {
 *💳 Otras:*
 • /bin 601111 - Discover (EEUU)
 • /bin 353011 - JCB (Japón)
-• /bin 362272 - Diners Club (México)
-
-*🔍 ¡Pruébalos todos!*`;
+• /bin 362272 - Diners Club (México)`;
     
     bot.sendMessage(chatId, ejemplos);
 });
