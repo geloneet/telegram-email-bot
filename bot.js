@@ -1,7 +1,7 @@
 require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
 const axios = require('axios');
-const nodemailer = requiere('nodemailer');
+const nodemailer = require('nodemailer');
 
 console.log('🚀 Iniciando Bot BIN Checker PRO...');
 
